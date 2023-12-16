@@ -3,7 +3,7 @@ const User = require("./../models/User");
 const fs = require("fs");
 const cloudinary = require("cloudinary");
 
-function saveArticle(obj, req, res) {
+export function saveArticle(obj, req, res) {
   new Article(obj).save((err, article) => {
     if (err) {
       res.send(err);
@@ -22,11 +22,11 @@ function saveArticle(obj, req, res) {
   });
 }
 
-exports.addArticle = (req, res) => {
+export function addArticle(req, res) {
   let { text, title, claps, description } = req.body;
 
   if (req.files.image) {
-    cloudinary.uploader
+    cloudinary.v2.uploader
       .upload(req.files.image.path, {
         resource_type: "image",
         transformation: [
@@ -50,4 +50,55 @@ exports.addArticle = (req, res) => {
   } else {
     saveArticle({ text, title, claps, description, feature_img: "" });
   }
-};
+}
+
+export function getAll(req, res) {
+  Article.find(req.params.id)
+    .populate("author")
+    .populate("comments.author")
+    .exec((err, article) => {
+      if (err) res.send(err);
+      else if (!article) res.send(404);
+      else res.send(article);
+    });
+}
+
+export function clapArticle(req, res) {
+  Article.findById(req.body.article_id)
+    .then((article) => {
+      return article.clap().then(() => {
+        res.status(200).json({ msg: "Done" });
+      });
+    })
+    .catch((err) => {
+      res.status(500).send(err.message || "Error processing your request");
+    });
+}
+
+export function commentArticle(req, res) {
+  Article.findById(req.body.article_id)
+    .then((article) => {
+      return article
+        .comment({
+          author: req.body.author_id,
+          text: req.body.comment,
+        })
+        .then(() => {
+          return res.json({ msg: "Done" });
+        });
+    })
+    .catch((err) => {
+      res.status(500).send(err);
+    });
+}
+
+export function getArticle(req, res) {
+  Article.findById(req.params.id)
+    .populate("author")
+    .populate("comments.author")
+    .exec((err, article) => {
+      if (err) res.send(err);
+      else if (!article) res.send(404);
+      else res.send(article);
+    });
+}
