@@ -8,7 +8,7 @@ cloudinary.v2.config({
     secure: true,
 });
 
-const image = '/image.jpeg'; // Make sure this path is correct
+const image = '/image.jpeg'; 
 
 cloudinary.uploader.upload(image)
     .then(result => console.log('Upload successful:', result))
