@@ -1,7 +1,8 @@
-const Article = require("./../models/Article");
-const User = require("./../models/User");
-const fs = require("fs");
-const cloudinary = require("cloudinary");
+import Article from "./../models/Article";
+import User from "./../models/User";
+import fs from "fs";
+import cloudinary from "cloudinary";
+
 
 export function saveArticle(obj, req, res) {
   new Article(obj).save((err, article) => {
