@@ -9,7 +9,7 @@ exports.addUser = (req, res) => {
     else res.send(newUser);
   });
 };
-
+// control action to get user by userId
 exports.getUser = (req, res) => {
   User.findById(req.params.id)
     .then((user) => {
@@ -18,3 +18,31 @@ exports.getUser = (req, res) => {
     })
     .catch((err) => res.status(500).send(err));
 };
+// control action to follow a user
+exports.followUser = (req, res) => {
+    User.findById(req.body.id)
+        .then((user) => {
+            return user.followers(req.body.user_id)
+            .then(() => {
+                return res.json({msg: "followed"})
+            })
+        })
+        .catch((err) => res.status(500).send(err))
+}
+
+// control action to get user profile, adds information for followers and following
+exports.getUserProfile = async (req, res) => {
+   try {
+    const _user = await User.findById(req.params.id)
+        .populate('followers', 'name email')
+        .populate('following', 'name email')
+    if (!_user){
+        return res.status(404).send("User not found")
+    }
+    const _articles = await Article.find({'author': req.params.id})
+    return res.json({user: _user,articles: _articles})
+   } catch (err) {
+    return res.status(500).send(err)
+   }
+
+}
