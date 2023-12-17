@@ -1,14 +1,17 @@
-const User = require("./../models/User");
-const Article = require("./../models/Article");
+import User from "./../models/User.js";
+import Article from "./../models/Article.js";
 
-// control action to create a new user
-export function addUser(req, res){
-  new User(req.body).save((err, newUser) => {
-    if (err) res.send(err);
-    else if (!newUser) res.send(400);
-    else res.send(newUser);
-  });
-};
+export async function addUser(req, res) {
+    try {
+      const newUser = new User(req.body);
+      const savedUser = await newUser.save();
+      res.send(savedUser);
+    } catch (err) {
+      res.status(500).send(err.message);
+    }
+}
+
+
 // control action to get user by userId
 export function getUser(req, res){
   User.findById(req.params.id)
@@ -19,16 +22,40 @@ export function getUser(req, res){
     .catch((err) => res.status(500).send(err));
 };
 // control action to follow a user
-export function followUser(req, res){
-    User.findById(req.body.id)
-        .then((user) => {
-            return user.followers(req.body.user_id)
-            .then(() => {
-                return res.json({msg: "followed"})
-            })
-        })
-        .catch((err) => res.status(500).send(err))
+export async function followUser(req, res) {
+    try {
+        // id, the user to be followed
+        // user_id, the user who is doing the following
+        const { id, user_id } = req.body;
+
+        // Find the user to be followed and update their followers array
+        // using await here because it needs tp find the user in the database which will take time
+        // any database actions will take a certain amount so using await  makes sure it "waits" for the correct response
+        const userToBeFollowed = await User.findById(id);
+        if (!userToBeFollowed) {
+            return res.status(404).json({ msg: "User to be followed not found" });
+        }
+        await userToBeFollowed.addFollower(user_id);
+
+        // Find the follower and update their following array
+        const follower = await User.findById(user_id);
+        if (!follower) {
+            return res.status(404).json({ msg: "Follower not found" });
+        }
+        await follower.follow(id);
+
+        res.json({ msg: "followed" });
+    } catch (err) {
+        console.error(err); // Log the error for debugging
+        res.status(500).send(err.message);
+    }
 }
+
+
+
+
+
+
 
 // control action to get user profile, adds information for followers and following
 export async function getUserProfile(req, res) {
@@ -45,4 +72,3 @@ export async function getUserProfile(req, res) {
         return res.status(500).send(err);
     }
 }
-

@@ -1,51 +1,56 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
-let UserSchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-  },
-  provider: {
-    type: String,
-  },
-  provider_id: {
-    type: String,
-  },
-  token: {
-    type: String,
-  },
-  provider_pic: {
-    type: String,
-  },
-  followers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+let UserSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
     },
-  ],
-  following: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    email: {
+      type: String,
+      required: true,
     },
-  ],
-  timestamps: true,
-});
+    provider: {
+      type: String,
+    },
+    provider_id: {
+      type: String,
+    },
+    token: {
+      type: String,
+    },
+    provider_pic: {
+      type: String,
+    },
+    followers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    following: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+  },
+  { timestamps: true }
+);
 
-UserSchema.methods.follow = function (user_id) {
-  if (this.following.indexOf(user_id) === -1) {
-    this.following.push(user_id);
+UserSchema.methods.follow = function (userId) {
+  if (!this.following.includes(userId)) {
+    this.following.push(userId);
   }
   return this.save();
 };
 
-UserSchema.methods.addFollower = function (fs) {
-  this.followers.push(fs);
+UserSchema.methods.addFollower = function (followerId) {
+  if (!this.followers.includes(followerId)) {
+    this.followers.push(followerId);
+  }
+  return this.save();
 };
 
-module.exports = mongoose.model("User", UserSchema);
+export default mongoose.model("User", UserSchema);
