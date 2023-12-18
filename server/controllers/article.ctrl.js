@@ -22,7 +22,6 @@ export async function saveArticle(obj, req, res) {
 
 export function addArticle(req, res) {
   let { text, title, claps, description } = req.body;
-
   //using cloudinary for image upload
   // checks if there is a file when a request is sent
   if (req.files && req.files.image) {
@@ -58,7 +57,7 @@ export function getAll(req, res) {
   Article.find(req.params.id)
     .populate("author")
     .populate("comments.author")
-    .exec((err, article) => {
+    .then((err, article) => {
       if (err) res.send(err);
       else if (!article) res.send(404);
       else res.send(article);
@@ -68,6 +67,7 @@ export function getAll(req, res) {
 export function clapArticle(req, res) {
   Article.findById(req.body.article_id)
     .then((article) => {
+
       return article.clap().then(() => {
         res.status(200).json({ msg: "Done" });
       });
@@ -80,27 +80,36 @@ export function clapArticle(req, res) {
 export function commentArticle(req, res) {
   Article.findById(req.body.article_id)
     .then((article) => {
-      return article
-        .comment({
-          author: req.body.author_id,
-          text: req.body.comment,
-        })
-        .then(() => {
-          return res.json({ msg: "Done" });
-        });
+      if (!article) {
+        return res.status(404).send("Article not found");
+      }
+
+      return article.comment({
+        author: req.body.author_id,
+        text: req.body.comment,
+      })
+      .then(() => {
+        return res.json({ msg: "Done" });
+      });
     })
     .catch((err) => {
-      res.status(500).send(err);
+      res.status(500).send(err.message);
     });
 }
 
+
 export function getArticle(req, res) {
   Article.findById(req.params.id)
-    .populate("author")
-    .populate("comments.author")
-    .exec((err, article) => {
-      if (err) res.send(err);
-      else if (!article) res.send(404);
-      else res.send(article);
+    .populate("author", "name email")
+    .populate("comments.author", "_id name")
+    .then((article) => {
+      if (!article) {
+        res.status(404).send("Article not found");
+      } else {
+        res.send(article);
+      }
+    })
+    .catch((err) => {
+      res.status(500).send(err.message || "An error occurred");
     });
 }
